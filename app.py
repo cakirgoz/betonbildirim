@@ -2,13 +2,18 @@ from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import generate_csrf
 from config import Config
-from models import db, User, Notification, Laboratuvar, BetonSantrali
+from models import db, User, Notification, Laboratuvar, BetonSantrali, get_turkey_time, TURKEY_TZ
 from forms import (LoginForm, ChangePasswordForm, FirstLoginPasswordForm, 
                    NotificationForm, UserForm, LaboratuvarForm, 
                    BetonSantraliForm, ResetPasswordForm)
 from decorators import admin_required, password_change_required
 from datetime import date, datetime
+import pytz
 import os
+
+def get_turkey_date():
+    """Türkiye'deki bugünün tarihini döndür"""
+    return datetime.now(TURKEY_TZ).date()
 
 # Flask uygulaması oluştur
 app = Flask(__name__)
@@ -129,7 +134,7 @@ def dashboard():
     if current_user.is_admin():
         return redirect(url_for('admin_dashboard'))
     
-    today = date.today()
+    today = get_turkey_date()
     notifications = Notification.query.filter_by(
         user_id=current_user.id,
         dokum_tarihi=today
@@ -174,7 +179,7 @@ def add_notification():
     
     # Bugünün tarihini default olarak ayarla
     if request.method == 'GET':
-        form.dokum_tarihi.data = date.today()
+        form.dokum_tarihi.data = get_turkey_date()
     
     return render_template('user/notification_form.html', form=form, title='Yeni Bildirim')
 
@@ -208,7 +213,7 @@ def edit_notification(id):
         notification.dokum_tarihi = form.dokum_tarihi.data
         notification.dokum_zamani = form.dokum_zamani.data
         notification.aciklama = form.aciklama.data
-        notification.updated_at = datetime.utcnow()
+        notification.updated_at = get_turkey_time()
         db.session.commit()
         flash('Bildirim başarıyla güncellendi.', 'success')
         return redirect(url_for('dashboard'))
@@ -261,7 +266,7 @@ def admin_dashboard():
     """Admin ana sayfası"""
     total_users = User.query.filter_by(role='user').count()
     total_notifications = Notification.query.count()
-    today_notifications = Notification.query.filter_by(dokum_tarihi=date.today()).count()
+    today_notifications = Notification.query.filter_by(dokum_tarihi=get_turkey_date()).count()
     active_labs = Laboratuvar.query.filter_by(is_active=True).count()
     active_plants = BetonSantrali.query.filter_by(is_active=True).count()
     
@@ -625,7 +630,7 @@ def admin_notifications():
     if plant_id:
         query = query.filter_by(beton_santrali_id=plant_id)
     if show_today:
-        query = query.filter_by(dokum_tarihi=date.today())
+        query = query.filter_by(dokum_tarihi=get_turkey_date())
     
     notifications = query.order_by(Notification.dokum_tarihi.desc(), 
                                    Notification.dokum_zamani.desc()).all()

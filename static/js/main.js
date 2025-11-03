@@ -111,10 +111,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Set default date to today for notification forms
+    // Not: Server-side zaten Türkiye saatine göre ayarlıyor, 
+    // bu yüzden burada local time kullanıyoruz
     const dateInput = document.querySelector('input[id="dokum_tarihi"]');
     if (dateInput && !dateInput.value) {
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.value = today;
+        // Kullanıcının local timezone'ında bugünün tarihi
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${year}-${month}-${day}`;
     }
 
     // Toggle password visibility

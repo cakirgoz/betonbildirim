@@ -2,8 +2,16 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import pytz
 
 db = SQLAlchemy()
+
+# Türkiye saat dilimi
+TURKEY_TZ = pytz.timezone('Europe/Istanbul')
+
+def get_turkey_time():
+    """Türkiye saatini döndür"""
+    return datetime.now(TURKEY_TZ)
 
 class User(UserMixin, db.Model):
     """Kullanıcı modeli - Admin ve Yapı Denetim kullanıcıları"""
@@ -16,7 +24,7 @@ class User(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False, default='user')  # 'admin' veya 'user'
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     must_change_password = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=get_turkey_time, nullable=False)
     
     # İlişkiler
     notifications = db.relationship('Notification', backref='user', lazy='dynamic', cascade='all, delete-orphan')
@@ -51,8 +59,8 @@ class Notification(db.Model):
     dokum_zamani = db.Column(db.String(5), nullable=False)  # HH:MM formatında
     dokum_tarihi = db.Column(db.Date, nullable=False, index=True)
     aciklama = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=get_turkey_time, nullable=False)
+    updated_at = db.Column(db.DateTime, default=get_turkey_time, onupdate=get_turkey_time, nullable=False)
     
     def __repr__(self):
         return f'<Notification {self.yibf_no} - {self.dokum_tarihi}>'
@@ -65,7 +73,7 @@ class Laboratuvar(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ad = db.Column(db.String(200), unique=True, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=get_turkey_time, nullable=False)
     
     # İlişkiler
     notifications = db.relationship('Notification', backref='laboratuvar', lazy='dynamic')
@@ -81,7 +89,7 @@ class BetonSantrali(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ad = db.Column(db.String(200), unique=True, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=get_turkey_time, nullable=False)
     
     # İlişkiler
     notifications = db.relationship('Notification', backref='beton_santrali', lazy='dynamic')
